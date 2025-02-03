@@ -1,0 +1,71 @@
+import os
+import pdfplumber
+from docx import Document
+import tkinter as tk
+from tkinter import filedialog, messagebox
+
+def select_pdf():
+    """Öffnet einen Dialog zur Auswahl der PDF-Datei"""
+    file_path = filedialog.askopenfilename(filetypes=[("PDF files", "*.pdf")])
+    if file_path:
+        entry_pdf_path.delete(0, tk.END)
+        entry_pdf_path.insert(0, file_path)
+
+def pdf_to_word(pdf_path):
+    """Konvertiert eine PDF-Datei in eine Word-Datei"""
+    if not pdf_path:
+        messagebox.showerror("Fehler", "Bitte eine PDF-Datei auswählen.")
+        return
+    
+    output_dir = os.path.dirname(pdf_path)
+    docx_filename = os.path.join(output_dir, os.path.splitext(os.path.basename(pdf_path))[0] + ".docx")
+
+    try:
+        doc = Document()
+        with pdfplumber.open(pdf_path) as pdf:
+            for page in pdf.pages:
+                text = page.extract_text()
+                if text:
+                    doc.add_paragraph(text)
+                    doc.add_page_break()  # Seitenumbruch nach jeder PDF-Seite
+        
+        doc.save(docx_filename)
+        messagebox.showinfo("Erfolg", f"Die Datei wurde erfolgreich konvertiert:\n{docx_filename}")
+    
+    except Exception as e:
+        messagebox.showerror("Fehler", f"Beim Konvertieren ist ein Fehler aufgetreten:\n{e}")
+
+def convert_pdf():
+    """Startet die Konvertierung"""
+    pdf_path = entry_pdf_path.get()
+    pdf_to_word(pdf_path)
+
+def exit_program():
+    """Beendet das Programm"""
+    root.destroy()
+
+# GUI mit tkinter
+root = tk.Tk()
+root.title("PDF zu Word Konverter")
+root.geometry("500x200")
+root.resizable(False, False)
+
+# Label und Eingabefeld für die PDF-Datei
+tk.Label(root, text="Wähle eine PDF-Datei aus:").pack(pady=5)
+entry_pdf_path = tk.Entry(root, width=50)
+entry_pdf_path.pack(pady=5)
+
+# Button zum PDF auswählen
+btn_select_pdf = tk.Button(root, text="Durchsuchen", command=select_pdf)
+btn_select_pdf.pack(pady=5)
+
+# Button zur Konvertierung
+btn_convert = tk.Button(root, text="Wandeln", command=convert_pdf, bg="green", fg="white")
+btn_convert.pack(pady=5)
+
+# Exit-Button
+btn_exit = tk.Button(root, text="Beenden", command=exit_program, bg="red", fg="white")
+btn_exit.pack(pady=5)
+
+# Starte die GUI
+root.mainloop()
